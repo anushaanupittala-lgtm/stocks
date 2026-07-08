@@ -9,13 +9,18 @@ on:
 
   schedule:
     # Monday-Friday
-    # 4:00 PM IST = 10:30 UTC
+    # 4:00 PM IST (10:30 UTC)
     - cron: "30 10 * * 1-5"
 
 jobs:
   scan:
-
     runs-on: ubuntu-latest
+
+    # IMPORTANT: This must match your Environment name
+    environment: stocks
+
+    permissions:
+      contents: read
 
     env:
       EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
@@ -23,7 +28,6 @@ jobs:
       EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
 
     steps:
-
       - name: Checkout Repository
         uses: actions/checkout@v4
 
@@ -31,32 +35,34 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
+          cache: pip
+          cache-dependency-path: requirements.txt
 
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Verify Installation
+      - name: Verify Environment
         run: |
           python --version
           pip list
+          echo "EMAIL_ADDRESS exists: ${{ secrets.EMAIL_ADDRESS != '' }}"
+          echo "EMAIL_RECEIVER exists: ${{ secrets.EMAIL_RECEIVER != '' }}"
 
       - name: Run Stock Scanner
         run: |
           python app.py
 
-      - name: Show Output Files
+      - name: List Output
         if: always()
         run: |
-          ls -R
+          ls -la
+          ls -la output || true
 
       - name: Upload Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: stock-report
-          path: |
-            output/signals.csv
-            output/signals.json
+          path: output/
