@@ -49,5 +49,32 @@ def add_indicators(df):
         .rolling(20)
         .mean()
     )
+    
+    # ======================================================
+    # Trading Levels
+    # ======================================================
+
+    # Entry Price (Today's Close)
+    df["ENTRY_PRICE"] = df["Close"]
+
+    # ATR-based Stop Loss
+    df["STOP_LOSS"] = (
+        df["ENTRY_PRICE"] -
+        (2 * df["ATR"])
+    )
+
+    # 1:2 Risk Reward
+    risk = df["ENTRY_PRICE"] - df["STOP_LOSS"]
+
+    df["TARGET_PRICE"] = (
+        df["ENTRY_PRICE"] +
+        (2 * risk)
+    )
+
+    # Trailing Stop Loss
+    df["TRAILING_SL"] = (
+        df["Close"] -
+        (1.5 * df["ATR"])
+    )
 
     return df
